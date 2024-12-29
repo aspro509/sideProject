@@ -34,9 +34,9 @@ class LSALayer(nn.Module):
         V = self.W_v(x)  # (batch_size, sequence_length, value_dim)
 
         # 어텐션 스코어 계산
-        attn_scores = torch.matmul(Q, K.transpose(-2, -1)) / (
-            self.key_dim**0.5
-        )  # (batch_size, sequence_length, sequence_length)
+        attn_scores = torch.matmul(
+            Q, K.transpose(-2, -1)
+        )  # / (self.key_dim**0.5)  # (batch_size, sequence_length, sequence_length)
 
         # 가중합 계산
         context = torch.matmul(
@@ -44,7 +44,7 @@ class LSALayer(nn.Module):
         )  # (batch_size, sequence_length, value_dim)
 
         # 출력 계산
-        output = self.P(context)  # (batch_size, sequence_length, output_dim)
+        output = torch.add(x, self.P(context))  # (batch_size, sequence_length, output_dim)
 
         return output
 
@@ -89,6 +89,9 @@ class LSA_Model(nn.Module):
 
 
 def main():
+    """
+    test 코드!
+    """
     d = 10
     N = 100
 
