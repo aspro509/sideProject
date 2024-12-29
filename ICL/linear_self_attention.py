@@ -18,7 +18,29 @@ class LSALayer(nn.Module):
         self.W_k = nn.Linear(input_dim, key_dim, bias=False)
         self.W_v = nn.Linear(input_dim, value_dim, bias=False)
         self.P = nn.Linear(value_dim, output_dim, bias=False)
+        # Initialize weights using truncated normal
+        self.initialize_weights()
 
+    def initialize_weights(self):
+        """
+        Initialize weights using Haiku-style truncated normal with stddev=0.002.
+        """
+        std = 0.002
+        for module in [self.W_q, self.W_k, self.W_v, self.P]:
+            self.truncated_normal_(module.weight, mean=0.0, std=std)
+
+    @staticmethod
+    def truncated_normal_(tensor, mean=0.0, std=0.002):
+        """
+        Apply truncated normal initialization to a tensor.
+        """
+        with torch.no_grad():
+            size = tensor.shape
+            tmp = tensor.new_empty(size + (4,)).normal_(mean=mean, std=std)
+            valid = (tmp < mean + 2 * std) & (tmp > mean - 2 * std)
+            ind = valid.max(-1, keepdim=True)[1]
+            tensor.data.copy_(tmp.gather(-1, ind).squeeze(-1))
+            
     def forward(self, x):
         """
         Args:
@@ -36,7 +58,7 @@ class LSALayer(nn.Module):
         # 어텐션 스코어 계산
         attn_scores = torch.matmul(
             Q, K.transpose(-2, -1)
-        )  # / (self.key_dim**0.5)  # (batch_size, sequence_length, sequence_length)
+        )  / (self.key_dim**0.5)  # (batch_size, sequence_length, sequence_length)
 
         # 가중합 계산
         context = torch.matmul(

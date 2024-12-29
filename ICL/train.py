@@ -80,7 +80,7 @@ for step in range(num_steps):
     
     with torch.no_grad():
 
-        predictions = model(val_data)
+        predictions = model(val_data)[:, -1:, d_in:]
         val_loss = custom_mse_loss(predictions, val_target)
         
         val_losses.append(val_loss.item())
@@ -88,12 +88,13 @@ for step in range(num_steps):
     if step % 100 == 0:
         print(f"step {step} loss: {loss.item():.4f}, val_loss: {val_loss.item():.4f}")
 
-print(target)
 def moving_average(data, window_size):
     """단순 이동 평균 계산"""
     return np.convolve(data, np.ones(window_size) / window_size, mode="valid")
 
-gd_predictions = lsa_gd(val_data)
+gd_predictions = lsa_gd(val_data)[:, -1:, d_in:]
+print(f"{val_target.shape = }, {gd_predictions.shape = }")
+
 gd_loss = custom_mse_loss(gd_predictions, val_target).item()
 # 이동 평균 적용
 window_size = 30

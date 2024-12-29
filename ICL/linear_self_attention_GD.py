@@ -24,7 +24,7 @@ def LSA_GD(eta=1.52339):
     W_K = np.identity(d_token, dtype=np.float32)
     W_K[-d_out:, -d_out:] = 0
 
-    W_V = -np.identity(d_token, dtype=np.float32)
+    W_V = np.identity(d_token, dtype=np.float32)
     W_V[:d_in, :d_in] = 0
 
 
