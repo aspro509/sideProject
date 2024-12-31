@@ -19,7 +19,7 @@ N = 10
 alpha = 1.0
 eta = 0.001
 
-def LSA_GD(eta=1.52339):
+def LSA_GD(eta=5.052):
     lsa_gd = LSALayer(d_token, d_token, d_token, d_token)
     W_K = np.identity(d_token, dtype=np.float32)
     W_K[-d_out:, -d_out:] = 0
@@ -62,7 +62,7 @@ def main():
         loss = custom_mse_loss(val_predictions, val_target)
         return loss.item()
 
-    etas = [i/100 for i in range(200)]
+    etas = [i/500+4.5 for i in range(500)]
     losses_eta = []
 
 

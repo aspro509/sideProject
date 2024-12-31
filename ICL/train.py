@@ -22,16 +22,16 @@ d_token = d_in + d_out
 B = 2048
 N = 10
 alpha = 1.0
-val_B = 10**4
+val_B = 10**5
 
 max_grad_norm = 10
 
 model = LSALayer(d_token, d_token, d_token, d_token)
 
-lr = 0.0005
+lr = 0.001
 optimizer = optim.Adam(model.parameters(), lr=lr)  # SGD with defort setting fails to decrease loss
 
-num_steps = 2000
+num_steps = 1500
 
 
 lsa_gd = LSA_GD()
@@ -72,7 +72,7 @@ for step in range(num_steps):
     optimizer.zero_grad()
     loss.backward()
 
-    torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+    #torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
     optimizer.step()
 
     # 검증 손실 계산
@@ -106,7 +106,14 @@ plt.plot(
     ma_losses,
     label="Moving Average training Loss",
     color="orange",
-    alpha=0.5,
+    alpha=0.3,
+)
+
+plt.plot(
+    [0, len(val_losses)],
+    [gd_loss, gd_loss],
+    label = "GD",
+    color="green",
 )
 plt.plot(
     val_losses,
@@ -114,12 +121,8 @@ plt.plot(
     color="purple",
 
 )
-plt.plot(
-    [0, len(val_losses)],
-    [gd_loss, gd_loss],
-    label = "GD",
-    color="green",
-)
+
+
 
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
