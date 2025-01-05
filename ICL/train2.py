@@ -31,7 +31,9 @@ model1 = LSALayer(d_token, d_token, d_token, d_token)
 model2 = SALayer(d_token, d_token, d_token, d_token)
 
 lr = 0.001
-optimizer1 = optim.Adam(model1.parameters(), lr=lr)  # SGD with defort setting fails to decrease loss
+optimizer1 = optim.Adam(
+    model1.parameters(), lr=lr
+)  # SGD with defort setting fails to decrease loss
 optimizer2 = optim.Adam(model2.parameters(), lr=lr)
 num_steps = 2000
 
@@ -39,8 +41,15 @@ num_steps = 2000
 lsa_gd = LSA_GD()
 
 train_tokens, batch_W = generate_data.generate_linear_regression_batch(
-        B=val_B, N=N, d_in=d_in, d_out=d_out, noise_std=0.0, x_low=-alpha, x_high=alpha, random_seed=0
-    )
+    B=val_B,
+    N=N,
+    d_in=d_in,
+    d_out=d_out,
+    noise_std=0.0,
+    x_low=-alpha,
+    x_high=alpha,
+    random_seed=0,
+)
 test_tokens = generate_data.generate_test_token(
     B=val_B, d_in=d_in, d_out=d_out, x_low=-alpha, x_high=alpha
 )
@@ -80,18 +89,17 @@ for step in range(num_steps):
 
     optimizer1.zero_grad()
     loss1.backward()
-    #torch.nn.utils.clip_grad_norm_(model1.parameters(), max_grad_norm)
+    # torch.nn.utils.clip_grad_norm_(model1.parameters(), max_grad_norm)
     optimizer1.step()
 
     optimizer2.zero_grad()
     loss2.backward()
-    #torch.nn.utils.clip_grad_norm_(model2.parameters(), max_grad_norm)
+    # torch.nn.utils.clip_grad_norm_(model2.parameters(), max_grad_norm)
     optimizer2.step()
 
     # 검증 손실 계산
     model1.eval()  # 모델을 평가 모드로 설정
     model2.eval()
-
 
     with torch.no_grad():
 
@@ -100,16 +108,20 @@ for step in range(num_steps):
 
         val_loss1 = custom_mse_loss(predictions1, val_target)
         val_loss2 = custom_mse_loss(predictions2, val_target)
-        
+
         val_losses1.append(val_loss1.item())
         val_losses2.append(val_loss2.item())
 
     if step % 100 == 0:
-        print(f"step {step:4d} loss: {loss1.item():.4f}, {loss2.item():.4f} val_loss: {val_loss1.item():.4f}, {val_loss2.item():.4f}")
+        print(
+            f"step {step:4d} loss: {loss1.item():.4f}, {loss2.item():.4f} val_loss: {val_loss1.item():.4f}, {val_loss2.item():.4f}"
+        )
+
 
 def moving_average(data, window_size):
     """단순 이동 평균 계산"""
     return np.convolve(data, np.ones(window_size) / window_size, mode="valid")
+
 
 # 이동 평균 적용
 window_size = 30
@@ -133,7 +145,7 @@ plt.plot(
 plt.plot(
     [0, len(val_losses1)],
     [gd_loss, gd_loss],
-    label = "GD",
+    label="GD",
     color="green",
 )
 
@@ -141,22 +153,16 @@ plt.plot(
     val_losses1,
     label="validataion LSA Loss",
     color="purple",
-
 )
 
 plt.plot(
-    moving_average(losses2, window_size),
-    label="train loss2",
-    color="yellow",
-    alpha=0.5
-
+    moving_average(losses2, window_size), label="train loss2", color="yellow", alpha=0.5
 )
 
 plt.plot(
     val_losses2,
     label="validataion SA Loss",
     color="blue",
-
 )
 
 

@@ -40,7 +40,7 @@ class LSALayer(nn.Module):
             valid = (tmp < mean + 2 * std) & (tmp > mean - 2 * std)
             ind = valid.max(-1, keepdim=True)[1]
             tensor.data.copy_(tmp.gather(-1, ind).squeeze(-1))
-            
+
     def forward(self, x):
         """
         Args:
@@ -66,7 +66,9 @@ class LSALayer(nn.Module):
         )  # (batch_size, sequence_length, value_dim)
 
         # 출력 계산
-        output = torch.add(x, self.P(context))  # (batch_size, sequence_length, output_dim)
+        output = torch.add(
+            x, self.P(context)
+        )  # (batch_size, sequence_length, output_dim)
 
         return output
 

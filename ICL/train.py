@@ -29,7 +29,9 @@ max_grad_norm = 10
 model = LSALayer(d_token, d_token, d_token, d_token)
 
 lr = 0.001
-optimizer = optim.Adam(model.parameters(), lr=lr)  # SGD with defort setting fails to decrease loss
+optimizer = optim.Adam(
+    model.parameters(), lr=lr
+)  # SGD with defort setting fails to decrease loss
 
 num_steps = 1500
 
@@ -37,8 +39,15 @@ num_steps = 1500
 lsa_gd = LSA_GD()
 
 train_tokens, batch_W = generate_data.generate_linear_regression_batch(
-        B=val_B, N=N, d_in=d_in, d_out=d_out, noise_std=0.0, x_low=-alpha, x_high=alpha, random_seed=0
-    )
+    B=val_B,
+    N=N,
+    d_in=d_in,
+    d_out=d_out,
+    noise_std=0.0,
+    x_low=-alpha,
+    x_high=alpha,
+    random_seed=0,
+)
 test_tokens = generate_data.generate_test_token(
     B=val_B, d_in=d_in, d_out=d_out, x_low=-alpha, x_high=alpha
 )
@@ -72,25 +81,27 @@ for step in range(num_steps):
     optimizer.zero_grad()
     loss.backward()
 
-    #torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+    # torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
     optimizer.step()
 
     # 검증 손실 계산
     model.eval()  # 모델을 평가 모드로 설정
-    
+
     with torch.no_grad():
 
         predictions = model(val_data)[:, -1:, d_in:]
         val_loss = custom_mse_loss(predictions, val_target)
-        
+
         val_losses.append(val_loss.item())
 
     if step % 100 == 0:
         print(f"step {step} loss: {loss.item():.4f}, val_loss: {val_loss.item():.4f}")
 
+
 def moving_average(data, window_size):
     """단순 이동 평균 계산"""
     return np.convolve(data, np.ones(window_size) / window_size, mode="valid")
+
 
 # 이동 평균 적용
 window_size = 30
@@ -114,16 +125,14 @@ plt.plot(
 plt.plot(
     [0, len(val_losses)],
     [gd_loss, gd_loss],
-    label = "GD",
+    label="GD",
     color="green",
 )
 plt.plot(
     val_losses,
     label="validataion Loss",
     color="purple",
-
 )
-
 
 
 plt.xlabel("Epoch")

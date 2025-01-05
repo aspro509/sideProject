@@ -9,5 +9,5 @@ print(W.shape)
 print(W.flatten().std())
 print(W.mean())
 
-plt.hist(W.flatten(), bins = 100)
+plt.hist(W.flatten(), bins=100)
 plt.show()
