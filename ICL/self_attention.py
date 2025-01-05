@@ -1,15 +1,16 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import generate_data
 
 
-class LSALayer(nn.Module):
+class SALayer(nn.Module):
     """
     1-head Linear Self Attention layer
     """
 
     def __init__(self, input_dim, output_dim, key_dim, value_dim):
-        super(LSALayer, self).__init__()
+        super(SALayer, self).__init__()
         self.key_dim = key_dim
         self.value_dim = value_dim
 
@@ -56,9 +57,9 @@ class LSALayer(nn.Module):
         V = self.W_v(x)  # (batch_size, sequence_length, value_dim)
 
         # 어텐션 스코어 계산
-        attn_scores = torch.matmul(
+        attn_scores = torch.softmax(torch.matmul(
             Q, K.transpose(-2, -1)
-        )  # / (self.key_dim**0.5)  # (batch_size, sequence_length, sequence_length)
+        )  / (self.key_dim**0.5), dim= 2) # (batch_size, sequence_length, sequence_length)
 
         # 가중합 계산
         context = torch.matmul(
@@ -69,63 +70,32 @@ class LSALayer(nn.Module):
         output = torch.add(x, self.P(context))  # (batch_size, sequence_length, output_dim)
 
         return output
-
-
-class LSA_Model(nn.Module):
-    def __init__(
-        self, num_layers, input_dim, output_dim, key_dim, value_dim, hidden_dim=None
-    ):
-        super(LSA_Model, self).__init__()
-        self.num_layers = num_layers
-
-        # 단일 레이어 모델
-        if num_layers == 1:
-            self.lsa = LSALayer(input_dim, output_dim, key_dim, value_dim)
-        # 다층 레이어 모델
-        else:
-            # 첫 번째 레이어: input_dim -> hidden_dim
-            layers = [LSALayer(input_dim, hidden_dim, key_dim, value_dim)]
-            # 중간 레이어: hidden_dim -> hidden_dim
-            for _ in range(num_layers - 2):
-                layers.append(LSALayer(hidden_dim, hidden_dim, key_dim, value_dim))
-            # 마지막 레이어: hidden_dim -> output_dim
-            layers.append(LSALayer(hidden_dim, output_dim, key_dim, value_dim))
-            self.lsa_layers = nn.ModuleList(layers)
-
-    def forward(self, x, mask=None):
-        """
-        Args:
-            x: 입력 텐서, shape: (batch_size, sequence_length, input_dim)
-            mask: 어텐션 마스크 텐서, shape: (batch_size, sequence_length, sequence_length)
-
-        Returns:
-            output: 출력 텐서, shape: (batch_size, sequence_length, output_dim)
-        """
-        if self.num_layers == 1:
-            output = self.lsa(x, mask)
-        else:
-            output = x
-            for layer in self.lsa_layers:
-                output = layer(output, mask)
-        return output
-
+    
 
 def main():
-    """
-    test 코드!
-    """
-    d = 10
-    N = 100
+    d_in = 10
+    d_out = 1
+    d_token = d_in + d_out
 
-    lsa_layer = LSALayer(d, d, d, d)
+    B = 10**4
+    N = 10
+    alpha = 1.0
 
-    E = np.random.normal(loc=0, scale=1, size=(10, N, d))
-    E = torch.tensor(E)
-    E = E.to(torch.float32)
+    train_tokens, batch_W = generate_data.generate_linear_regression_batch(
+        B=B, N=N, d_in=d_in, d_out=d_out, noise_std=0.0, x_low=-alpha, x_high=alpha, random_seed=0
+    )
+    test_tokens = generate_data.generate_test_token(
+        B=B, d_in=d_in, d_out=d_out, x_low=-alpha, x_high=alpha
+    )
 
-    output = lsa_layer(E)
-    print(output.shape)
-    print(lsa_layer)
+    val_data = torch.concatenate([train_tokens, test_tokens], axis=1)
+    val_target = torch.einsum("bnd, bdy -> bny", test_tokens[:, :, :d_in], batch_W)
+
+    model = SALayer(d_token,d_token,d_token,d_token)
+
+    prediction = model(val_data)
+
+    print(prediction.shape)
 
 
 if __name__ == "__main__":
